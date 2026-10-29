@@ -157,7 +157,7 @@ class HeatmapGenerator:
                 # Extract data from the line
                 header = l[0]
                 for trna, length in self.tRNA_lengths.items():
-                    tRNA = self.UtoT(trna)
+                    tRNA = trna # self.UtoT(trna)
                     if tRNA in header:
                         new_header = trna if trna != 'MetCAT' or 'iMetCAT' in header else trna
 
@@ -340,7 +340,8 @@ class HeatmapGenerator:
             plt.setp(ax.get_xticklabels(), fontsize=X_TICK_FONT_SIZE, ha="center", rotation_mode="anchor")
 
         # Set tick marks and labels for the y-axis
-        ax.set_yticks(np.arange(len(noT_labels)), labels=noT_labels)
+        ax.set_yticks(np.arange(len(noT_labels)))
+        ax.set_yticklabels(noT_labels)
 
         # Set font size for y-axis tick labels
         plt.setp(ax.get_yticklabels(), fontsize=Y_TICK_FONT_SIZE)
