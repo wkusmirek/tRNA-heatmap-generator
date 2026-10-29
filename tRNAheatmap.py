@@ -18,7 +18,7 @@ plt.switch_backend('agg')
 
 
 class HeatmapGenerator:
-    def __init__(self, input_file, output_file, lengths_file, adaptors, title, resolution, difference, bidirectional,
+    def __init__(self, input_file, output_file, lengths_file, adaptors, title, resolution, difference, preffered_order, bidirectional,
                  structure):
         self.input_file = input_file
         self.output_file = output_file
@@ -27,6 +27,7 @@ class HeatmapGenerator:
         self.adaptors = [int(adaptors.split(',')[0]), int(adaptors.split(',')[1])]
         self.title = title
         self.difference = difference
+        self.preffered_order = preffered_order
         self.bidirectional = bidirectional
         self.resolution = resolution
 
@@ -69,11 +70,65 @@ class HeatmapGenerator:
         # Filter out tRNAs with adjusted length of 0
         self.tRNA_labels = [tRNA for tRNA, length in self.tRNA_lengths.items() if length > 0]
 
+        # Własna kolejność wierszy na heatmapie
+        preferred_order = []
+        if self.preffered_order:
+            preferred_order = [
+                "Saccharomyces_cerevisiae_tRNA-Asn-GTT-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Arg-ACG-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Arg-TCT-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Cys-GCA-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Ile-AAT-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Ile-TAT-1-1",
+                "Saccharomyces_cerevisiae_tRNA-LeT-TAA-1-1",
+                "Saccharomyces_cerevisiae_tRNA-LeT-TAG-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Lys-CTT-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Lys-TTT-1-1",
+                "Saccharomyces_cerevisiae_tRNA-iMet-CAT-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Met-CAT-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Phe-GAA-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Pro-TGG-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Ser-GCT-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Thr-AGT-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Trp-CCA-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Tyr-GTA-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Val-AAC-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Val-CAC-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Val-TAC-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Ala-AGC-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Asp-GTC-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Gly-GCC-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Gly-TCC-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Glu-TTC-1-1",
+                "Saccharomyces_cerevisiae_tRNA-His-GTG-1-1",
+                "Saccharomyces_cerevisiae_tRNA-LeT-CAA-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Ser-AGA-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Ser-CGA-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Ser-TGA-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Ala-TGC-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Arg-CCG-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Arg-CCT-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Gln-CTG-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Gln-TTG-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Glu-CTC-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Gly-CCC-1-1",
+                "Saccharomyces_cerevisiae_tRNA-LeT-GAG-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Pro-AGG-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Thr-CGT-1-1",
+                "Saccharomyces_cerevisiae_tRNA-Thr-TGT-1-1",
+        ]
+        self.tRNA_labels = [
+            tRNA for tRNA in preferred_order if tRNA in self.tRNA_labels
+        ] + [
+            tRNA for tRNA in self.tRNA_labels if tRNA not in preferred_order
+        ]
+
         for name in self.tRNA_labels:
-            if 'Tyr-GTA' in name:
-                self.clean_labels.append(name.split("-")[1]+name.split("-")[2])
-            else:
-                self.clean_labels.append(name.split("-")[1])
+            self.clean_labels.append(name.split("-")[1]+name.split("-")[2])
+#            if 'Tyr-GTA' in name:
+#                self.clean_labels.append(name.split("-")[1]+name.split("-")[2])
+#            else:
+#                self.clean_labels.append(name.split("-")[1])
 
         # Update the tRNA count based on the filtered tRNA labels
         self.tRNA_count = len(self.tRNA_labels)
@@ -382,6 +437,8 @@ def main():
     parser.add_argument("-t", "--title", type=str, default=None, help="Title of plot. Default is no title.")
     parser.add_argument("-d", "--difference", required=False, action="store_true",
                         help="Calculate the difference between two input files (second input - first input).")
+    parser.add_argument("-p", "--preffered_order", required=False, action="store_true",
+                        help="Order like Fig 3C")
     parser.add_argument("-b", "--bidirectional", required=False, action="store_true",
                         help="Produces difference plot with directionality maintained (cbar normalized from [-0.5, "
                              "0.5]).")
@@ -410,7 +467,7 @@ def main():
 
         # Process the first input file
         heatmap_generator = HeatmapGenerator(input_file1, args.output, args.lengths, args.adaptors, args.title,
-                                             args.resolution, args.difference, args.bidirectional, args.structure)
+                                             args.resolution, args.difference, args.preffered_order, args.bidirectional, args.structure)
         heatmap_generator.load_lengths()
         heatmap_generator.load_structure()
         heatmap_generator.import_data()
@@ -421,7 +478,7 @@ def main():
 
         # Process the second input file
         second_heatmap_generator = HeatmapGenerator(input_file2, args.output, args.lengths, args.adaptors,
-                                                    args.title, args.resolution, args.difference, args.bidirectional,
+                                                    args.title, args.resolution, args.difference, args.preffered_order, args.bidirectional,
                                                     args.structure)
         second_heatmap_generator.load_lengths()
         heatmap_generator.load_structure()
@@ -441,7 +498,7 @@ def main():
     else:
         # Process the input file without calculating the difference
         heatmap_generator = HeatmapGenerator(input_file1, args.output, args.lengths, args.adaptors, args.title,
-                                             args.resolution, args.difference, args.bidirectional, args.structure)
+                                             args.resolution, args.difference, args.preffered_order, args.bidirectional, args.structure)
         heatmap_generator.load_lengths()
         heatmap_generator.load_structure()
         heatmap_generator.import_data()
